@@ -31,7 +31,8 @@ impl Command {
 //  │    │           └── ack      [Depth : 3]
 //  │    │
 //  └── show                      [Depth : 0]
-//       ├── table                [Depth : 1]
+//       ├── session              [Depth : 1]
+//       │     └── table          [Depth : 2]
 //       └── command              [Depth : 1]
 
 pub fn make_commands() -> Vec<Command> {
@@ -45,7 +46,8 @@ pub fn make_commands() -> Vec<Command> {
     commands.push(Command::new("ack",       "binding",  3, "Send binding ack",		Some(send_mobile_binding_ack)));
 
     commands.push(Command::new("show",      "root",     0, "Show information",		None));
-    commands.push(Command::new("table",     "show",     1, "Show the table",		Some(show_table)));
+    commands.push(Command::new("session",	 "show",     1, "Show the table",		None));
+    commands.push(Command::new("table",     "session",  2, "Show the table",		Some(show_table)));
     commands.push(Command::new("command",   "show",     1, "Show commands",		Some(show_command)));
 
     commands

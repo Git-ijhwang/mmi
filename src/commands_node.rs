@@ -1,17 +1,12 @@
 use std::thread;
 use std::collections::HashMap;
-use std::io::{stdin, stdout, Read, BufRead};
+use std::io::stdin;
 use std::io::{self, Write};
 use termion::raw::IntoRawMode;
 use termion::event::{Event, Key};
 use termion::input::TermRead;
 
 use crate::command::*;
-
-// use crossterm::{
-//     event::{self, KeyCode, KeyEvent},
-//     terminal::{disable_raw_mode, enable_raw_mode},
-// };
 
 #[derive(Debug, Clone)]
 struct CommandNode {
@@ -36,21 +31,14 @@ impl CommandNode {
 fn find_in_depth<'a> (node: &'a mut CommandNode, command: Vec<&str>, depth: usize)
 -> Option<&'a mut CommandNode>
 {
-    // 현재 명령어 추출
-    let gcommand = if depth < command.len() {
-        command[depth]
-    } else if depth > 0 {
-        command[depth - 1]
-    } else {
-        return None;
-    };
+	let pos = depth.min(command.len() - 1);
 
     // 현재 노드와 비교
-    if depth >= command.len() && node.command != gcommand {
+    if depth >= command.len() && node.command != command[pos] {
         return None;
     }
 
-    if depth == command.len() && node.command == gcommand {
+    if depth == command.len() && node.command == command[pos] {
         return Some(node);
     }
 
