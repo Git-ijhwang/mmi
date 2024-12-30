@@ -25,6 +25,28 @@ impl CommandNode {
             action,
         }
     }
+
+	fn insert_node(&self, command: Command) -> CommandNode {
+		let commands = make_commands();
+		let mut root = CommandNode::new("root","Root command node", None);
+
+		for command in commands {
+			if command.parent == "root" {
+				root.subcommands.insert(
+					command.command.clone(),
+					CommandNode::new(&command.command, &command.description, command.action)
+				);
+			} else if let Some(parent) = insert_in_depth(&mut root, &command, 0) {
+				parent.subcommands.insert(
+					command.command.clone(),
+					CommandNode::new(&command.command, &command.description, command.action)
+				);
+			}
+		}
+
+    root
+	}
+
 }
 
 
@@ -33,16 +55,17 @@ fn find_in_depth<'a> (node: &'a mut CommandNode, command: Vec<&str>, depth: usiz
 {
 	let pos = depth.min(command.len() - 1);
 
-    // 현재 노드와 비교
+    // Compare the command at the current depth
     if depth >= command.len() && node.command != command[pos] {
         return None;
     }
 
+	// if the command is found at the current depth
     if depth == command.len() && node.command == command[pos] {
         return Some(node);
     }
 
-    // 자식 노드에서 검색
+    // current depth is less than the target depth
     if depth < command.len() {
         for child in node.subcommands.values_mut() {
             if let Some(found) = find_in_depth(child, command.clone(), depth + 1) {
@@ -101,7 +124,6 @@ fn insert_in_depth<'a> (node: &'a mut CommandNode, command: &Command, depth: u32
 }
 
 fn build_command_tree() -> CommandNode {
-
     let commands = make_commands();
     let mut root = CommandNode::new("root","Root command node", None);
 
@@ -131,9 +153,7 @@ pub fn prompt() -> Result<(), String>
     writeln!(stdout, "\n\rType commands. Press 'Tab' to see suggestions. Type 'exit' to quit.").map_err(|e| format!("\n\rFailed to write to stdout: {}", e))?;
     stdout.flush().unwrap();
 
-    // let command_tree = build_command_tree();
-    let command_tree_clone = build_command_tree();
-
+    let command_tree = build_command_tree();
     let handle = thread::spawn(move || {
         let stdin = stdin();
         let mut input = String::new();
@@ -155,7 +175,7 @@ pub fn prompt() -> Result<(), String>
 					}
 					else {
                 		writeln!(stdout, "\n\rExecuting command: {}", input).unwrap();
-                		execute_command(&command_tree_clone, input.as_str());
+                		execute_command(&command_tree, input.as_str());
                 		input.clear();
 					}
                 	write!(stdout, "\r> ").unwrap();
@@ -168,7 +188,7 @@ pub fn prompt() -> Result<(), String>
 
                 Event::Key(Key::Char('\t')) => {
                     let trimmed_input = input.trim_end();
-                    suggest_next_commands(&command_tree_clone, trimmed_input);
+                    suggest_next_commands(&command_tree, trimmed_input);
                     write!(stdout, "\r> {}", trimmed_input).unwrap();
                 }
 
